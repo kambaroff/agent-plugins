@@ -73,7 +73,9 @@ On a push to `main` the hook exports the pushed commit (not the working tree), f
 (`--category` is added when `MIRROR_CATEGORY_<plugin>` is set). Plugin names map to variables with
 `-` replaced by `_`. The mirror script is expected to commit in `MIRROR_DST` and leave the push to you.
 Where `rsync` is missing (Git for Windows), `.githooks/bin/rsync` stands in for the
-`rsync -a --delete --exclude … SRC/ DST/` form.
+`rsync -a --delete --exclude … SRC/ DST/` form. Under Git Bash the hook also hands the script
+`C:/…` paths and turns off MSYS argument conversion, which would otherwise rewrite
+`origin/main:path` revisions on their way to `git`.
 
 ## License
 

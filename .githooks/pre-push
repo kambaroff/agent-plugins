@@ -40,6 +40,15 @@ if ! command -v rsync >/dev/null 2>&1; then
   export PATH
 fi
 
+if command -v cygpath >/dev/null 2>&1; then
+  src=$(cygpath -m "$src")
+  MIRROR_DST=$(cygpath -m "$MIRROR_DST")
+  TMPDIR=$(cygpath -m "${TMPDIR:-/tmp}")
+  MSYS_NO_PATHCONV=1
+  MSYS2_ARG_CONV_EXCL='*'
+  export TMPDIR MSYS_NO_PATHCONV MSYS2_ARG_CONV_EXCL
+fi
+
 for plugin in $plugins; do
   key=$(printf '%s' "$plugin" | tr -c 'A-Za-z0-9' '_')
   ticket_var="MIRROR_TICKET_$key"
