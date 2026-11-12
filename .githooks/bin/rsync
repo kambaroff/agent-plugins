@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+excludes=()
+paths=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -a|--delete) shift ;;
+    --exclude) excludes+=("$2"); shift 2 ;;
+    --exclude=*) excludes+=("${1#--exclude=}"); shift ;;
+    -*) echo "rsync stand-in: unsupported option $1" >&2; exit 2 ;;
+    *) paths+=("$1"); shift ;;
+  esac
+done
+
+if [ ${#paths[@]} -ne 2 ] || [ "${paths[0]%/}" = "${paths[0]}" ]; then
+  echo "rsync stand-in: only 'rsync -a --delete [--exclude P]... SRC/ DST' is supported" >&2
+  exit 2
+fi
+src="${paths[0]%/}"
+dst="${paths[1]%/}"
+[ -d "$src" ] || { echo "rsync stand-in: no such directory: $src" >&2; exit 23; }
+
+match=()
+for pattern in "${excludes[@]+"${excludes[@]}"}"; do
+  [ ${#match[@]} -eq 0 ] || match+=(-o)
+  case "$pattern" in
+    */) match+=(\( -type d -name "${pattern%/}" \)) ;;
+    *) match+=(-name "$pattern") ;;
+  esac
+done
+
+keep=$(mktemp -d)
+trap 'rm -rf "$keep"' EXIT
+if [ -d "$dst" ] && [ ${#match[@]} -gt 0 ]; then
+  (cd "$dst" && find . -mindepth 1 \( "${match[@]}" \) -prune -print0 | tar --null -cf - -T -) | tar -xf - -C "$keep"
+fi
+
+rm -rf "$dst"
+mkdir -p "$dst"
+cp -a "$src/." "$dst/"
+if [ ${#match[@]} -gt 0 ]; then
+  find "$dst" -mindepth 1 \( "${match[@]}" \) -prune -exec rm -rf {} +
+fi
+(cd "$keep" && tar -cf - .) | tar -xf - -C "$dst"

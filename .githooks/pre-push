@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+conf="${AGENT_PLUGINS_MIRROR_CONF:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-plugins/mirror.conf}"
+[ -f "$conf" ] || exit 0
+
+MIRROR_SCRIPT=""
+MIRROR_DST=""
+MIRROR_BRANCH="main"
+. "$conf"
+
+if [ ! -f "$MIRROR_SCRIPT" ] || [ ! -d "$MIRROR_DST" ]; then
+  echo "mirror: MIRROR_SCRIPT or MIRROR_DST from $conf not found, skipped" >&2
+  exit 0
+fi
+
+zero=0000000000000000000000000000000000000000
+sha=""
+plugins=""
+while read -r _ local_sha remote_ref remote_sha; do
+  [ "$remote_ref" = "refs/heads/$MIRROR_BRANCH" ] || continue
+  [ "$local_sha" != "$zero" ] || continue
+  sha="$local_sha"
+  if [ "$remote_sha" = "$zero" ] || ! git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
+    changed=$(git ls-tree -r --name-only "$local_sha" -- plugins)
+  else
+    changed=$(git diff --name-only "$remote_sha" "$local_sha" -- plugins)
+  fi
+  plugins=$(printf '%s\n' "$changed" | awk -F/ '$1 == "plugins" && $3 == ".claude-plugin" && $4 == "plugin.json" {print $2}' | sort -u)
+done
+
+[ -n "$sha" ] && [ -n "$plugins" ] || exit 0
+
+src=$(mktemp -d)
+trap 'rm -rf "$src"' EXIT
+git archive "$sha" plugins | tar -xf - -C "$src"
+
+if ! command -v rsync >/dev/null 2>&1; then
+  PATH="$(git rev-parse --show-toplevel)/.githooks/bin:$PATH"
+  export PATH
+fi
+
+for plugin in $plugins; do
+  key=$(printf '%s' "$plugin" | tr -c 'A-Za-z0-9' '_')
+  ticket_var="MIRROR_TICKET_$key"
+  category_var="MIRROR_CATEGORY_$key"
+  ticket="${!ticket_var:-}"
+  category="${!category_var:-}"
+  if [ -z "$ticket" ]; then
+    echo "mirror: $ticket_var is not set in $conf, $plugin skipped" >&2
+    continue
+  fi
+  args=("$plugin")
+  [ -z "$category" ] || args+=(--category "$category")
+  echo "mirror: $plugin" >&2
+  MIRROR_SRC="$src" MIRROR_DST="$MIRROR_DST" MIRROR_TICKET="$ticket" \
+    PYTHONUTF8=1 PYTHONIOENCODING=utf-8 \
+    bash "$MIRROR_SCRIPT" "${args[@]}" </dev/null >&2 || true
+done
+
+exit 0

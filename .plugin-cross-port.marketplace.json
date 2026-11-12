@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "source_of_truth": "claude-code",
+  "source_marketplace": ".claude-plugin/marketplace.json",
+  "targets": {
+    "codex": ".agents/plugins/marketplace.json"
+  },
+  "plugins": {
+    "android-verify": {
+      "path": "plugins/android-verify",
+      "source_of_truth": "claude-code",
+      "status": "synced"
+    },
+    "plan-gate": {
+      "path": "plugins/plan-gate",
+      "source_of_truth": "claude-code",
+      "status": "synced"
+    }
+  },
+  "codex_exclude": []
+}

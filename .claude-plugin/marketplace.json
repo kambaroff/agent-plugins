@@ -1,0 +1,33 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "agent-plugins",
+  "version": "1.0.0",
+  "description": "Claude Code and Codex plugins for verifying Android changes and gating agent work behind an approved plan",
+  "owner": {
+    "name": "kambaroff"
+  },
+  "plugins": [
+    {
+      "name": "android-verify",
+      "version": "0.1.0",
+      "description": "Verify Android changes on an emulator or device over plain adb — build identity check, a person signs in, scenario driven from uiautomator dumps, screenshots and backend responses in the report — and run Gradle with its output read through a summary instead of the raw log.",
+      "source": "./plugins/android-verify",
+      "author": {
+        "name": "kambaroff",
+        "url": "https://github.com/kambaroff"
+      },
+      "category": "development"
+    },
+    {
+      "name": "plan-gate",
+      "version": "0.1.0",
+      "description": "Plan, approve, execute, verify: the plan is written and shown first, nothing changes until a person approves it, an executor agent on a cheaper model carries it out, and the diff is checked against the plan before the report.",
+      "source": "./plugins/plan-gate",
+      "author": {
+        "name": "kambaroff",
+        "url": "https://github.com/kambaroff"
+      },
+      "category": "development"
+    }
+  ]
+}

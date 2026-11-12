@@ -1,0 +1,47 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  scripts:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: android-verify scripts
+        run: python -m unittest discover -s plugins/android-verify/tests -v
+
+  codex-in-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: plugin-cross-port
+        run: git clone --depth 1 https://github.com/IvanLutsenko/awac-ai-agent-plugins "$RUNNER_TEMP/awac"
+
+      - name: generated Codex files match the Claude Code side
+        run: |
+          python "$RUNNER_TEMP/awac/plugins/plugin-cross-port/scripts/cross_port.py" --repo-root . marketplace check
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+
+  mirror-hook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shell syntax
+        run: bash -n .githooks/pre-push && bash -n .githooks/bin/rsync
