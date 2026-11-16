@@ -15,6 +15,11 @@
       "path": "plugins/plan-gate",
       "source_of_truth": "claude-code",
       "status": "synced"
+    },
+    "work-recap": {
+      "path": "plugins/work-recap",
+      "source_of_truth": "claude-code",
+      "status": "synced"
     }
   },
   "codex_exclude": []

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "plugin": "work-recap",
+  "generated_at": "2026-11-16T06:11:47+00:00",
+  "source_of_truth": "claude-code",
+  "decisions": {
+    "skills_shared": false,
+    "commands_converted": true,
+    "agents_converted": false,
+    "hooks_converted": false
+  },
+  "warnings": [],
+  "manually_maintained": [],
+  "status": "synced"
+}

@@ -21,6 +21,9 @@ jobs:
       - name: android-verify scripts
         run: python -m unittest discover -s plugins/android-verify/tests -v
 
+      - name: work-recap scripts
+        run: python -m unittest discover -s plugins/work-recap/tests -v
+
   codex-in-sync:
     runs-on: ubuntu-latest
     steps:

@@ -12,6 +12,9 @@ generated with [`plugin-cross-port`](https://github.com/IvanLutsenko/awac-ai-age
 - [`plan-gate`](plugins/plan-gate) — `/plan-gate`: the plan is written and shown first, nothing changes
   until a person approves it, an executor agent on a cheaper model carries it out, and the diff is
   checked against the plan before the report.
+- [`work-recap`](plugins/work-recap) — `/recap`: what you did on the previous work day or over a week,
+  from the forge's activity feed, the repository's history and your notes — commits, merge requests,
+  review threads, replies and approvals grouped by ticket, plus a short text for the team.
 
 ## Installation
 
@@ -20,6 +23,7 @@ generated with [`plugin-cross-port`](https://github.com/IvanLutsenko/awac-ai-age
 /plugin marketplace add https://github.com/kambaroff/agent-plugins
 /plugin install android-verify
 /plugin install plan-gate
+/plugin install work-recap
 ```
 
 **Codex CLI:**
@@ -27,6 +31,7 @@ generated with [`plugin-cross-port`](https://github.com/IvanLutsenko/awac-ai-age
 codex plugin marketplace add kambaroff/agent-plugins
 codex plugin add android-verify@agent-plugins
 codex plugin add plan-gate@agent-plugins
+codex plugin add work-recap@agent-plugins
 ```
 
 ## Layout

@@ -1,0 +1,14 @@
+{
+  "name": "work-recap",
+  "description": "A factual recap of your previous work day or week from the forge's activity feed, the repository's history and your notes: commits, merge requests, review threads, replies and approvals grouped by ticket, plus a short text for the team.",
+  "version": "0.1.0",
+  "author": {
+    "name": "kambaroff",
+    "url": "https://github.com/kambaroff"
+  },
+  "keywords": ["recap", "standup", "weekly-report", "gitlab", "github", "review"],
+  "license": "MIT",
+  "commands": [
+    "./commands/recap.md"
+  ]
+}

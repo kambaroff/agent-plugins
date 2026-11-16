@@ -1,0 +1,19 @@
+{
+  "name": "work-recap",
+  "version": "0.1.0",
+  "description": "A factual recap of your previous work day or week from the forge's activity feed, the repository's history and your notes: commits, merge requests, review threads, replies and approvals grouped by ticket, plus a short text for the team.",
+  "author": {
+    "name": "kambaroff"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Work Recap",
+    "shortDescription": "A factual recap of your previous work day or week from the forge's activity feed",
+    "developerName": "kambaroff",
+    "category": "Development",
+    "capabilities": [
+      "Read",
+      "Write"
+    ]
+  }
+}
