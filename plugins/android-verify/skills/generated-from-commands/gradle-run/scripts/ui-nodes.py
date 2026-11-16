@@ -2,13 +2,14 @@
 """List the nodes of a `uiautomator dump` that a scenario can read or tap.
 
 Usage:
-    ui-nodes.py <dump.xml> [--find <text>] [--json]
+    ui-nodes.py <dump.xml> [--find <text> [--exact]] [--json]
 
 One line per node that carries text, a content description or a resource id,
 or is clickable: its centre (the point to pass to `adb shell input tap`), the
 clickable flag, and what it says. `--find` keeps the nodes whose text,
-description or id contains the given text (case-insensitive). `--json` prints
-the same nodes as a JSON list.
+description or id contains the given text (case-insensitive); with `--exact`
+the whole value must equal it. When several nodes match, stderr says so.
+`--json` prints the same nodes as a JSON list.
 
 Exit code: 0 when at least one node is listed, 1 when none is (a `--find`
 that matched nothing, or an empty screen), 2 when the dump cannot be read.
@@ -20,6 +21,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 BOUNDS = re.compile(r"\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]")
+READ_ERRORS = (OSError, ET.ParseError, UnicodeDecodeError)
 
 
 def parse_bounds(value):
@@ -60,9 +62,17 @@ def nodes(xml_text):
     return out
 
 
-def matches(node, needle):
+def read(path):
+    with open(path, encoding="utf-8") as f:
+        return nodes(f.read())
+
+
+def matches(node, needle, exact=False):
     needle = needle.casefold()
-    return any(needle in node[k].casefold() for k in ("text", "desc", "id"))
+    values = (node[k].casefold() for k in ("text", "desc", "id"))
+    if exact:
+        return needle in values
+    return any(needle in value for value in values)
 
 
 def line(node):
@@ -81,16 +91,22 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("dump")
     ap.add_argument("--find")
+    ap.add_argument("--exact", action="store_true")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     try:
-        with open(a.dump, encoding="utf-8") as f:
-            found = nodes(f.read())
-    except (OSError, ET.ParseError) as error:
+        found = read(a.dump)
+    except READ_ERRORS as error:
         print(f"cannot read {a.dump}: {error}", file=sys.stderr)
         return 2
     if a.find:
-        found = [n for n in found if matches(n, a.find)]
+        found = [n for n in found if matches(n, a.find, a.exact)]
+        if len(found) > 1:
+            print(
+                f"{len(found)} nodes match {a.find!r}: narrow it (--exact, desc, id) "
+                "or pick one by its position",
+                file=sys.stderr,
+            )
     if a.json:
         print(json.dumps(found, ensure_ascii=False, indent=2))
     else:

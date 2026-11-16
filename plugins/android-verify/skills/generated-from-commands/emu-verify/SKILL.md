@@ -85,15 +85,39 @@ mid-scenario often signs the app out again.
 Repeat for every step: read the screen, decide, act, read again. Never act on a dump taken before the
 last action.
 
+On an emulator, turn animations off for the run: they make dumps fail (`could not get idle state`) and
+race with transitions. Note the current values first; Step 7 puts back those, not a fixed `1`.
+
+```bash
+adb -s <serial> shell settings get global window_animation_scale
+adb -s <serial> shell settings put global window_animation_scale 0
+```
+
+The same for `transition_animation_scale` and `animator_duration_scale`. A value of `null` means the key
+was never set: put it back with `settings delete global <key>`, not by writing `null`. Leave the
+animations alone on a physical device, and when the scenario checks an animation.
+
 ```bash
 mkdir -p "<out>"
-adb -s <serial> shell uiautomator dump /sdcard/ui.xml && adb -s <serial> pull /sdcard/ui.xml "<out>/ui-<n>.xml"
+python3 "<this skill directory>/scripts/ui-dump.py" "<out>/ui-<n>.xml" --serial <serial>
 python3 "<this skill directory>/scripts/ui-nodes.py" "<out>/ui-<n>.xml" --find "<label>"
 ```
 
+`ui-dump.py` deletes the previous dump on the device, dumps, repeats a failed dump and pulls the file.
+Do not run `uiautomator dump` and `adb pull` by hand: the dump exits 0 even when it wrote nothing, and
+the pull then brings back the screen of an earlier step. Exit code 2 means no dump could be taken: say
+so, do not read an older file instead.
+
+After an action that starts a transition or a request, wait for the screen instead of sleeping:
+`--until "<label>"` repeats the dump until that node is there, `--gone "<label>"` until it is gone (a
+loader). Both stop after `--timeout` seconds (15 by default) with exit code 1, and the last dump stays
+at the path.
+
 `ui-nodes.py` prints each readable or tappable node as `x,y  tap  text="…" desc="…" id="…"`; `x,y` is
 the centre to tap. Exit code 1 means nothing matched — the screen is not the one you expected; read
-the full list before guessing.
+the full list before guessing. Several matches (the same "More" on every row of a list) are no reason
+to tap the first one: narrow the query with `--exact`, the `desc` or the `id`, or pick the row by its
+position next to a node you can name.
 
 - tap: `adb -s <serial> shell input tap <x> <y>`
 - type: `adb -s <serial> shell input text '<text>'` (a space is `%s`)
@@ -128,6 +152,8 @@ adb -s <serial> logcat -d -t 2000 | grep "<http_log_tag>"
 cookies and tokens from anything you quote.
 
 ## Step 7 — Report
+
+If Step 4 turned animations off, put the noted values back first, also when the run stops early.
 
 - the build verified (`versionName`, `lastUpdateTime`) and the device;
 - each scenario step: expected, observed, ✅/❌, with the screenshot path;

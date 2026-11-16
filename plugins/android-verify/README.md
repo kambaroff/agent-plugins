@@ -17,7 +17,17 @@ codex plugin marketplace add kambaroff/agent-plugins
 codex plugin add android-verify@agent-plugins
 ```
 
-Version: 0.1.0
+Version: 0.1.1
+
+## What's New in 0.1.1
+
+- `scripts/ui-dump.py` takes the dump for `/emu-verify`: it deletes the previous dump on the device
+  first, so a dump that silently wrote nothing no longer brings back the screen of an earlier step;
+  repeats a failed dump; waits for a node to appear (`--until`) or a loader to go (`--gone`) with a
+  timeout instead of a blind sleep.
+- `ui-nodes.py --exact`, a note on stderr when several nodes match, and exit 2 instead of a traceback on
+  a dump that is not valid UTF-8.
+- `/emu-verify` turns animations off on an emulator for the run and puts the previous values back.
 
 ## What's New in 0.1.0
 
@@ -42,8 +52,10 @@ Version: 0.1.0
 2. Checks that the installed build is the one under test (`dumpsys package`: `versionName`,
    `lastUpdateTime`) and offers `/gradle-run <install_task>` when it is not.
 3. Asks a person to sign in. The agent never types logins, passwords, codes or PINs.
-4. Drives the scenario: `uiautomator dump` → `scripts/ui-nodes.py` lists readable and tappable nodes
-   with the centre to tap → `adb shell input` → a fresh dump before every next decision.
+4. Drives the scenario: `scripts/ui-dump.py` pulls a fresh dump (or waits until the expected node is
+   there) → `scripts/ui-nodes.py` lists readable and tappable nodes with the centre to tap →
+   `adb shell input` → a fresh dump before every next decision. Animations are off on an emulator for
+   the run.
 5. Takes screenshots (written on the device, then pulled; a black capture is reported as the app's
    secure flag), and reads the app's HTTP log in logcat when the UI and the backend disagree.
 6. Reports each step as expected / observed / ✅❌ with the screenshot path, plus what could not be
@@ -69,12 +81,15 @@ Keys and defaults: [`config-defaults.md`](config-defaults.md) — `app_id`, `dev
 
 ## Scripts
 
-- `scripts/ui-nodes.py <dump.xml> [--find <text>] [--json]` — nodes of a uiautomator dump with their
-  tap centre; exit 1 when nothing matches, 2 when the dump cannot be read.
+- `scripts/ui-dump.py <out.xml> [--serial <s>] [--until <text> | --gone <text>] [--timeout <s>]` — a
+  fresh uiautomator dump pulled from the device, never the previous one; waits for a node to appear or
+  disappear; exit 1 at the timeout, 2 when no dump could be taken.
+- `scripts/ui-nodes.py <dump.xml> [--find <text> [--exact]] [--json]` — nodes of a uiautomator dump with
+  their tap centre; exit 1 when nothing matches, 2 when the dump cannot be read.
 - `scripts/gradle-summary.py <log> [--max <n>]` — the summary above; exit 0 / 1 / 2 for successful /
   failed / no result line. Reads Windows (CRLF) logs as well.
 
-Both are covered by `tests/test_scripts.py`.
+All three are covered by `tests/test_scripts.py`.
 
 ## Codex
 
